@@ -1,0 +1,479 @@
+<!DOCTYPE html><html lang='en' class=''>
+
+<style class="cp-pen-styles">body,
+html {
+  -webkit-user-select: none;
+  width: 100%;
+  height: 100%;
+  background-color: #01005e;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+#ticker {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.ticker {
+  position: relative;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), inset 0px 0px 35px 10px #141414;
+  background-color: #01005e;
+  background-image: -webkit-linear-gradient(45deg, #01005e 25%, transparent 25%, transparent 75%, #01005e 75%, #01005e 100%), -webkit-linear-gradient(45deg, #22267b 25%, #22267b 25%, #22267b 75%, #22267b 75%, #22267b 100%);
+  background-size: 100px 99px;
+  background-position: 0 0, 50px 50px;
+  height: 100%;
+  width: 100%;
+  color: white;
+  padding: 30px 100px 45px 10px;
+  display: table;
+  table-layout: fixed;
+  box-sizing: border-box;
+}
+.ticker ol {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: table-row;
+}
+.ticker li {
+  list-style-type: none;
+  display: table-cell;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+.ticker li .candle {
+  position: absolute;
+  width: 90%;
+  border: solid 1px #eb6e40;
+  background-color: #ff7541;
+  min-height: 1px;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+  background: repeating-linear-gradient(45deg, #F2003C, #F2003C 40px, #F2003C 40px, #F2003C 80px);
+  cursor: pointer;
+}
+.ticker li .candle:hover {
+  border: solid 1px #ccc !important;
+}
+.ticker li .min-max {
+  width: 1px;
+  position: absolute;
+  left: 45%;
+  background-color: #ff7541;
+}
+.ticker li.up .min-max,
+.ticker li.up .candle {
+  background: none;
+  background-color: #477749;
+  border-color: #013220;
+}
+.ticker li.up .candle {
+  background-color: #00FF00;
+  _background: repeating-linear-gradient(-45deg, #29AB87, #29AB87 40px, #29AB87 40px, #29AB87 80px);
+}
+.ticker .max,
+.ticker .min {
+  width: 100px;
+  right: -25px;
+  position: absolute;
+  text-align: left;
+  font-size: 11px;
+  font-family: Courier;
+  text-decoration: underline;
+  color: #999;
+  display: none;
+}
+.ticker .max {
+  top: 24px;
+}
+.ticker .min {
+  bottom: 40px;
+}
+
+.labels {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: table;
+}
+.labels .label {
+  position: absolute;
+  width: 100%;
+}
+.labels .label .line {
+  position: absolute;
+  border-bottom: rgba(255, 255, 255, 0.09) 1px dashed;
+  width: 100%;
+  height: 2px;
+  top: -3px;
+}
+.labels .label span {
+  position: absolute;
+  right: 30px;
+  top: -15px;
+  font-size: 11px;
+  color: rgb(0, 255, 85);
+  font-family: Courier;
+}
+.labels .price {
+  position: absolute;
+  z-index: 2;
+  right: 21px;
+}
+.labels .price span {
+  position: relative;
+  top: -13px;
+  text-decoration: underline;
+  display: block;
+  color: black;
+  background-color: #aaa;
+  font-size: 16px;
+  padding: 5px 9px 5px 9px;
+  height: 16px;
+  font-family: Courier;
+  line-height: 16px;
+  border-radius: 4px;
+}
+.labels .price span:before {
+  position: absolute;
+  display: block;
+  content: "";
+  left: -9px;
+  top: 11px;
+  width: 11px;
+  height: 4px;
+  background-color: #aaa;
+}
+
+.controls {
+  position: absolute;
+  left: 10px;
+  bottom: 11px;
+}
+.controls select {
+  display: inline-block;
+  -webkit-appearance: none;
+  box-shadow: 0 0 10px 3px rgba(0, 0, 0, 0.5);
+  border: solid 1px white;
+  padding: 3px 8px;
+  cursor: pointer;
+  margin: 0px;
+  opacity: 0.7;
+  font-size: 16px;
+  background-color: #fc9d9d;
+  color: rgb(0, 0, 0);
+  border-radius: 0;
+  text-align-last: center;
+  font-size: 16px;
+}
+.controls select:hover {
+  color: white;
+  border-color: white;
+}
+.controls .price {
+  color: #c8c8c8;
+  font-family: Courier;
+  position: relative;
+  top: 2px;
+  left: 6px;
+  font-size: 21px;
+}
+</style></head><body>
+<div id="ticker">
+<div class="ticker">
+<div class="labels">
+<div class="label" v-for="label in labels" v-bind:style="{ 'top': getCandleOffset(label) }">
+<div class="line"></div>
+<span>{{label | price}}</span>
+</div>
+<div class="price" v-bind:style="{ 'top': getCandleOffset(current.close) }">
+<span>{{current.close | price }}</span>
+</div>
+</div>
+<ol>
+<li v-for="candle in displayCandles" v-bind:class="{ 'up': candle.open <= candle.close }">
+<div class="min-max" v-bind:style="{ 
+          'height': getCandleHeight(candle.min, candle.max), 
+          'top': getCandleOffset(candle.min, candle.max) }">
+</div>
+<div class="candle" v-bind:style="{ 
+            'height': getCandleHeight(candle.open, candle.close), 
+            'top': getCandleOffset(candle.open, candle.close) }">
+</div>
+</li>
+<li v-bind:class="{ 'up': current.open <= current.close }">
+<div class="min-max" v-bind:style="{ 
+            'height': getCandleHeight(current.min, current.max), 
+            'top': getCandleOffset(current.min, current.max) }">
+</div>
+<div class="candle current" v-bind:data-open="open" v-bind:style="{
+              'height': getCandleHeight(current.open, current.close), 
+              'top': getCandleOffset(current.open, current.close) }">
+</div>
+</li>
+</ol>
+<div class="max">${{displayMax | price }}</div>
+<div class="min">${{displayMin | price }}</div>
+<div class="controls">
+<select v-model="product">
+<option>BTC-USD</option>
+<option>LTC-USD</option>
+<option>ETH-USD</option>
+</select>
+<select v-model="candleCount">
+<option value="20">20 candles</option>
+<option value="40">40 candles</option>
+<option value="80">80 candles</option>
+</select>
+<select v-model="interval">
+<option value="1000">1s</option>
+<option value="5000">5s</option>
+<option value="10000">10s</option>
+<option value="30000">30s</option>
+<option value="60000">1min</option>
+<option value="300000">5min</option>
+<option value="900000">15min</option>
+<option value="3600000">1hr</option>
+<option value="21600000">6hr</option>
+<option value="86400000">1day</option>
+</select>
+<span class="price">Price: <u>{{current.close | price}}</></span>
+</div>
+</div>
+</div>
+<script src='https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js'></script>
+<script id="rendered-js">
+          const DEFAULT_CANDLE_COUNT = 80;
+const DEFAULT_CANDLE_INTERVAL = 300000;
+const DEFAULT_PRODUCT = "LTC-USD";
+
+const FEED_URL = "wss://ws-feed.gdax.com";
+const HISTORY_API = "https://api.gdax.com/products/";
+
+let _ws = null;
+let _interval = null;
+
+Vue.filter("price", function (value) {
+  return `$${parseFloat(Math.round(value * 100) / 100).toFixed(2)}`;
+});
+
+async function getOldCandles(product, interval) {
+  return new Promise((resolve, reject) => {
+    $.getJSON(`${HISTORY_API}/${product}/candles?granularity=${interval / 1000}`,
+    function (response) {
+      response = response.sort((a, b) => a[0] - b[0]);
+      for (var i = 1; i < response.length; i++) {
+        response[i][3] = response[i - 1][4];
+      }
+      const candles = response.map(candle => ({
+        open: candle[3],
+        close: candle[4],
+        min: candle[1],
+        max: candle[2] }));
+
+      resolve(candles);
+    });
+
+  });
+}
+
+const ticker = new Vue({
+  el: "#ticker",
+  data: {
+    product: DEFAULT_PRODUCT,
+    candles: [],
+    candleCount: DEFAULT_CANDLE_COUNT,
+    current: {
+      open: 0,
+      close: 0,
+      min: Infinity,
+      max: 0 },
+
+    interval: DEFAULT_CANDLE_INTERVAL },
+
+  computed: {
+    displayCandles: function () {
+      if (this.candles.length > this.candleCount) {
+        return this.candles.slice(
+        Math.max(this.candles.length - this.candleCount, 1));
+
+      } else {
+        return this.candles;
+      }
+    },
+    displayBoundsCandles: function () {
+      if (this.candles.length > this.candleCount * 2) {
+        return this.candles.slice(
+        Math.max(this.candles.length - this.candleCount * 2, 1));
+
+      } else {
+        return this.candles;
+      }
+    },
+    displayMax: function () {
+      return Math.max.apply(null, [
+      ...this.displayBoundsCandles.map(v => v.max),
+      this.current.max]);
+
+    },
+    displayMin: function () {
+      return Math.min.apply(null, [
+      ...this.displayBoundsCandles.map(v => v.min),
+      this.current.min]);
+
+    },
+    labels: function () {
+      const min = this.displayMin;
+      const max = this.displayMax;
+      const diff = max - min;
+
+      if (diff === 0) {
+        return [];
+      }
+
+      const step = diff / 5;
+
+      var arr = [];
+
+      for (var i = 0; i <= 5 + 1; i++) {
+        let val = min + i * step;
+        val = parseFloat(Math.round(val * 100) / 100).toFixed(2);
+        arr.push(val);
+      }
+
+      arr = arr.filter((item, i) => arr.indexOf(item) === i);
+
+      return arr;
+    } },
+
+  mounted: function () {
+    this.init();
+  },
+  watch: {
+    product: function () {
+      this.init();
+    },
+    interval: function () {
+      this.init();
+    } },
+
+  methods: {
+    init: async function () {
+
+      let product = this.product;
+
+      this.candles.splice(0);
+      this.current.open = 0;
+      this.current.close = 0;
+      this.current.min = Infinity;
+      this.current.max = 0;
+
+      let candles;
+
+      if (this.interval >= 10000) {
+        candles = await getOldCandles(this.product, this.interval);
+        this.current.open = candles[candles.length - 1].close;
+        this.current.close = candles[candles.length - 1].close;
+      } else {
+        candles = [];
+      }
+
+      this.candles = candles;
+
+      if (_ws) {
+        _ws.close();
+      }
+
+      _ws = new WebSocket(FEED_URL);
+      _ws.onopen = () => {
+        _ws.send(
+        JSON.stringify({
+          type: "subscribe",
+          product_ids: [this.product],
+          channels: [
+          "ticker",
+          {
+            name: "ticker",
+            product_ids: [this.product] }] }));
+
+
+
+
+      };
+
+      _ws.onmessage = evt => {
+        const response = JSON.parse(evt.data);
+        const price = {
+          // sequence: response.sequence,
+          // time: new Date(response.time),
+          value: parseFloat(response.price) };
+
+        if (price.value) ticker.add(price, product);
+      };
+
+      if (_interval) {
+        clearInterval(_interval);
+      }
+
+      _interval = setInterval(() => {
+        const historicVal = {
+          open: this.current.open,
+          close: this.current.close,
+          min: this.current.min,
+          max: this.current.max };
+
+
+        this.candles.push(historicVal);
+        this.current.open = historicVal.close;
+        this.current.close = historicVal.close;
+        this.current.min = Infinity;
+        this.current.max = 0;
+      }, this.interval);
+    },
+    add: function (price, product) {
+
+      if (product !== this.product) {
+        return;
+      }
+
+      this.current.close = price.value;
+      this.current.open = this.current.open || price.value;
+      if (price.value > this.current.max) {
+        this.current.max = price.value;
+      }
+      if (price.value < this.current.min) {
+        this.current.min = price.value;
+      }
+    },
+    getCandleHeight: function (open, close) {
+      if (open === Infinity || close === Infinity) {
+        return 0;
+      }
+      const diff = Math.abs(open - close);
+      const window = this.displayMax - this.displayMin;
+      const heightPerc = diff / window * 100;
+      return `${heightPerc}%`;
+    },
+    getCandleOffset: function (open, close) {
+      if (open === Infinity || close === Infinity) {
+        return 0;
+      }
+
+      let top = Math.max(open, close);
+
+      if (!close) {
+        top = open;
+      }
+
+      const window = this.displayMax - this.displayMin;
+      const positionPerc = 100 - (top - this.displayMin) / window * 100;
+      return `${positionPerc}%`;
+    } } });
+          //# sourceURL=pen.js
+        </script>
+</body></html>
