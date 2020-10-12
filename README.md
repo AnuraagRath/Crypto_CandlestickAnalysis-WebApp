@@ -1,7 +1,4 @@
 # Crypto_CandlestickAnalysis-WebApp
-![logo](/images/logo.png)
-
-
 A Candlestick analysis webapp that gives you the real time Chart of the prices of Bitcoin, Ether and Litecoin. 
 
 # The App
